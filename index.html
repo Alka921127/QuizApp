@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Team Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="quiz-box">
+
+    <h1>Team Quiz</h1>
+
+<label>Name:</label>
+<input type="text"
+       id="playerName"
+       placeholder="Enter Your Name">
+
+<br><br>
+
+<label>Team Name:</label>
+<input type="text"
+       id="teamName"
+       placeholder="Enter Team Name">
+
+
+
+
+
+
+<br><br>
+
+    <p id="timer">Time Left: 60</p>
+
+    <h3 id="question"></h3>
+
+    <div id="options"></div>
+
+    <br>
+
+    <button onclick="checkAnswer()">
+        Submit
+    </button>
+
+    <p id="result"></p>
+
+    <button id="nextBtn"
+            onclick="nextQuestion()"
+            style="display:none;">
+        Next Question
+    </button>
+
+</div>
+
+<script>
+
+//import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+//import {
+// getFirestore,
+// collection,
+// addDoc
+//} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAuA_kjIAYiNhMTlT0q8h5bgEw2EjeFXug",
+  authDomain: "wib-quiz.firebaseapp.com",
+  projectId: "wib-quiz",
+  storageBucket: "wib-quiz.firebasestorage.app",
+  messagingSenderId: "180934833152",
+  appId: "1:180934833152:web:acb340488242490fd594e5",
+  measurementId: "G-GTKTC8VTPH"
+};
+
+//const app = initializeApp(firebaseConfig);
+//const db = getFirestore(app);
+
+
+const questions = [
+{
+    question: "Which planet is known as the Red Planet?",
+    options: ["Earth", "Mars", "Venus", "Jupiter"],
+    answer: "Mars"
+},
+{
+    question: "Capital of India?",
+    options: ["Mumbai", "Delhi", "Hyderabad", "Chennai"],
+    answer: "Delhi"
+},
+{
+    question: "2 + 2 = ?",
+    options: ["3", "4", "5", "6"],
+    answer: "4"
+},
+{
+    question: "Which animal is called the King of the Jungle?",
+    options: ["Tiger", "Elephant", "Lion", "Leopard"],
+    answer: "Lion"
+},
+{
+    question: "How many days are there in a week?",
+    options: ["5", "6", "7", "8"],
+    answer: "7"
+}
+];
+
+let currentQuestion = 0;
+let score = 0;
+let timeLeft = 60;
+
+function loadQuestion() {
+
+    const q = questions[currentQuestion];
+
+    document.getElementById("question").innerHTML =
+        q.question;
+
+    let html = "";
+
+    q.options.forEach(option => {
+
+        html += `
+        <label>
+            <input type="radio"
+                   name="answer"
+                   value="${option}">
+            ${option}
+        </label>
+        <br>
+        `;
+    });
+
+    document.getElementById("options").innerHTML =
+        html;
+
+    document.getElementById("result").innerHTML = "";
+
+    document.getElementById("nextBtn").style.display =
+        "none";
+}
+
+function checkAnswer() {
+
+    const teamName =
+        document.getElementById("teamName").value;
+
+    const playerName =
+        document.getElementById("playerName").value;
+
+
+    if (teamName.trim() === "") {
+        alert("Please enter Team Name");
+        return;
+    }
+
+
+if (playerName.trim() === "") {
+    alert("Please enter your Name");
+    return;
+}
+
+if (teamName.trim() === "") {
+    alert("Please enter Team Name");
+    return;
+}
+
+
+
+    const selected =
+        document.querySelector(
+            'input[name="answer"]:checked'
+        );
+
+    if (!selected) {
+        alert("Please select an answer");
+        return;
+    }
+
+    const correctAnswer =
+        questions[currentQuestion].answer;
+
+    if (selected.value === correctAnswer) {
+
+        score++;
+
+        document.getElementById("result").innerHTML =
+            "✅ Correct!";
+
+    } else {
+
+        document.getElementById("result").innerHTML =
+            "❌ Wrong! Correct answer: " +
+            correctAnswer;
+    }
+
+    document.getElementById("nextBtn").style.display =
+        "inline-block";
+}
+
+async function nextQuestion() {
+
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+
+        loadQuestion();
+
+    } else {
+
+        const teamName =
+            document.getElementById("teamName").value;
+
+        const playerName =
+            document.getElementById("playerName").value;
+
+       const leaderboard =
+    JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+leaderboard.push({
+    team: teamName,
+    score: score
+});
+
+//addDoc(collection(db, "Users"), {
+//    Name: playerName,
+//    Team: teamName,
+//   Score: score
+//});
+
+
+
+leaderboard.sort((a, b) => b.score - a.score);
+
+localStorage.setItem(
+    "leaderboard",
+    JSON.stringify(leaderboard)
+);
+
+let boardHTML = "";
+
+leaderboard.forEach(item => {
+
+    boardHTML +=
+        `<p>${item.team} - ${item.score}/${questions.length}</p>`;
+});
+
+document.querySelector(".quiz-box").innerHTML =
+`
+<h2>Quiz Complete 🎉</h2>
+
+<h3>Team: ${teamName}</h3>
+
+<h3>Your Score: ${score}/${questions.length}</h3>
+
+<hr>
+
+<h2>🏆 Leaderboard</h2>
+
+${boardHTML}
+`;
+    }
+}
+
+function startTimer() {
+
+    const timer = setInterval(function() {
+
+        timeLeft--;
+
+        document.getElementById("timer").innerHTML =
+            "Time Left: " + timeLeft;
+
+        if (timeLeft <= 0) {
+
+            clearInterval(timer);
+
+            const teamName =
+                document.getElementById("teamName").value;
+
+           document.querySelector(".quiz-box").innerHTML =
+`
+<h2>Quiz Complete 🎉</h2>
+
+<h3>Team: ${teamName}</h3>
+
+<h3>Your Score: ${score}/${questions.length}</h3>
+
+<hr>
+
+<h2>🏆 Leaderboard</h2>
+
+${boardHTML}
+
+<br><br>
+
+<button onclick="nextTeam()">
+    Next Team
+</button>
+
+<button onclick="clearLeaderboard()">
+    Clear Leaderboard
+</button>`;
+        }
+
+    }, 1000);
+}
+function clearLeaderboard() {
+
+    localStorage.removeItem("leaderboard");
+
+    alert("Leaderboard cleared");
+}
+
+function playAgain() {
+
+    currentQuestion = 0;
+    score = 0;
+    timeLeft = 60;
+
+    document.querySelector(".quiz-box").innerHTML = `
+
+    <h1>Team Quiz</h1>
+
+    <label>Team Name:</label>
+    <input type="text"
+           id="teamName"
+           placeholder="Enter Team Name">
+
+    <br><br>
+
+    <p id="timer">Time Left: 60</p>
+
+    <h3 id="question"></h3>
+
+    <div id="options"></div>
+
+    <br>
+
+    <button onclick="checkAnswer()">
+        Submit
+    </button>
+
+    <p id="result"></p>
+
+    <button id="nextBtn"
+            onclick="nextQuestion()"
+            style="display:none;">
+        Next Question
+    </button>
+    `;
+
+    loadQuestion();
+    startTimer();
+}
+window.onload = function() {
+    loadQuestion();
+    startTimer();
+};
+
+</script>
+
+</body>
+</html>
